@@ -6,8 +6,10 @@ import numpy
 import matplotlib.pyplot as plt
 import copy
 
-
+# Created Images class for Original and Desired image objects.
 class Images:
+
+    # Defined attributes of image object.
     def __init__(self, PILimage):
         self.PILimage = PILimage
         self.SizedCvImage = None
@@ -17,12 +19,14 @@ class Images:
         self.EqualizedImage = None
         self.ArrayforEqualization = None
 
+    # PIL image changed to Sized CV image.
     def PILtoSızedCV(self):
         cvImage = cv2.cvtColor(numpy.array(self.PILimage), cv2.COLOR_RGB2GRAY)
         self.SizedCvImage = cv2.resize(
             cvImage, (self.ImageSize, self.ImageSize), interpolation=cv2.INTER_AREA
         )
 
+    # Created histogram plot and transformed to PIL image.
     def GetHıstogramPILImage(self):
         ImageHistogramArray = numpy.zeros(([256]))
         copySizedCvImage = copy.deepcopy(self.SizedCvImage)
@@ -43,7 +47,8 @@ class Images:
         Originalpic_IObytes.seek(0)
         plt.close()
         self.HistogramImage = copy.deepcopy(Image.open(Originalpic_IObytes))
-
+    
+    # Histgoram Equalization operations have been done.
     def histogramEqualization(self):
         ProcessedArray = numpy.zeros(([256]))
         copyHistogramArray = copy.deepcopy(self.HistogramArray)
@@ -57,7 +62,7 @@ class Images:
             ProcessedArray[x] = ProcessedArray[x] * 255
 
         self.ArrayforEqualization = copy.deepcopy(ProcessedArray)
-
+    # Equalized image getted.
     def getEqualizedImage(self):
         tempImage = copy.deepcopy(self.SizedCvImage)
         copyArrayforEqualization = copy.deepcopy(self.ArrayforEqualization)
@@ -67,7 +72,7 @@ class Images:
                 tempImage[k, y] = copyArrayforEqualization[originalGreyValue]
         self.EqualizedImage = copy.deepcopy(tempImage)
 
-
+# Function for finding nearest value in the array. Used for image value matching.
 def find_nearest_value(array, value):
     idx_sorted = numpy.argsort(array)
     sorted_array = numpy.array(array[idx_sorted])
@@ -83,7 +88,7 @@ def find_nearest_value(array, value):
             idx_nearest = idx_sorted[idx]
     return idx_nearest
 
-
+# Two image matched here.
 def MatchtheImages():
     desiredImage.histogramEqualization()
     matchedArray = copy.deepcopy(originalImage.ArrayforEqualization)
@@ -100,7 +105,7 @@ def MatchtheImages():
             matchedImage[k, y] = matchedArray[originalGreyValue]
     return matchedImage
 
-
+# Histogram image function for non object images.
 def getHistogramImageofEqualizedCvImage(cvimage):
     TempHistogramArray = numpy.zeros(([256]))
     for x in range(cvimage.shape[0]):
@@ -121,14 +126,14 @@ def getHistogramImageofEqualizedCvImage(cvimage):
     HistogramImageofEqualizedCvImage = Image.open(Originalpic_IObytes)
     return HistogramImageofEqualizedCvImage
 
-
+# PySimpleGUI only support PNG files so end of the process we format to PNG for showing image on gui.
 def FormatToPngForShow(image):
     image.thumbnail((400, 400), Image.ANTIALIAS)
     bio = io.BytesIO()
     image.save(bio, format="PNG")
     return bio
 
-
+# Layout for GUI.
 layout = [
     [
         sg.Image(key="ShowedImage"),
@@ -173,26 +178,31 @@ layout = [
         ),
     ],
 ]
+
+# GUI's window matched with layout.
 window = sg.Window(
     "HISTOGRAM EQUALIZATION AND MATCHING", auto_size_buttons=True, location=(100, 40)
 ).Layout(layout)
 
+# Event loop for caught actions on the GUI.
 while True:
     event, values = window.read()
+    # To close the program break line.
     if event is None:
         break
+    # Actions for first button.
     elif event == "_FILEBROWSE_ORIGINAL":
         originalImage = Images(Image.open(values["_FILEBROWSE_ORIGINAL"]))
         originalImage.PILtoSızedCV()
         bio = FormatToPngForShow(copy.deepcopy(originalImage.PILimage))
         window["ShowedImage"].update(data=bio.getvalue())
-
+    # Actions for second button.
     elif event == "_FILEBROWSE_TARGET":
         desiredImage = Images(Image.open(values["_FILEBROWSE_TARGET"]))
         desiredImage.PILtoSızedCV()
         bio2 = FormatToPngForShow(copy.deepcopy(desiredImage.PILimage))
         window["ShowedImage2"].update(data=bio2.getvalue())
-
+    # Actions for third button.
     elif event == "HISTOGRAMBUTTON":
         image3 = Image.fromarray(originalImage.SizedCvImage)
         bio3 = FormatToPngForShow(image3)
@@ -211,7 +221,7 @@ while True:
         image4 = Image.fromarray(desiredImage.SizedCvImage)
         bio4 = FormatToPngForShow(image4)
         window["ShowedImage2"].update(data=bio4.getvalue())
-
+    # Actions for fourth button.
     elif event == "HISTOGRAMEQUALIZATIONBUTTON":
         originalImage.histogramEqualization()
         originalImage.getEqualizedImage()
@@ -224,7 +234,7 @@ while True:
         )
         bio2 = FormatToPngForShow(image2)
         window["ShowedImage4"].update(data=bio2.getvalue())
-
+    # Actions for fifth button.
     elif event == "MATCH":
         image2 = Image.fromarray(desiredImage.SizedCvImage)
         bio2 = FormatToPngForShow(image2)
@@ -244,6 +254,7 @@ while True:
         image4 = copy.deepcopy(desiredImage.HistogramImage)
         bio4 = FormatToPngForShow(image4)
         window["ShowedImage4"].update(data=bio4.getvalue())
-
+        
+#After the breaking of loop method for close window. 
 window.close()
 
